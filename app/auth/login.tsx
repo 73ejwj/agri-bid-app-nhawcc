@@ -12,20 +12,31 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [userType, setUserType] = useState<'farmer' | 'company' | 'exporter'>('farmer');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    console.log('Login button pressed');
+    console.log('Form data:', { email, passwordLength: password.length, userType });
+    
+    if (!email.trim() || !password.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+
     setLoading(true);
-    const result = await login(email, password, userType);
+    const result = await login(email.trim(), password, userType);
     
     if (result.success) {
+      console.log('Login successful, navigating to marketplace');
       router.replace('/marketplace');
     } else {
+      console.log('Login failed:', result.error);
       Alert.alert('Login Failed', result.error || 'Please try again');
     }
     setLoading(false);
@@ -55,7 +66,10 @@ export default function LoginScreen() {
                   styles.userTypeButton,
                   userType === type.key && styles.userTypeButtonActive
                 ]}
-                onPress={() => setUserType(type.key)}
+                onPress={() => {
+                  console.log('User type selected:', type.key);
+                  setUserType(type.key);
+                }}
               >
                 <Icon 
                   name={type.icon as any} 
@@ -77,28 +91,58 @@ export default function LoginScreen() {
             <TextInput
               style={commonStyles.input}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                console.log('Email changed:', text);
+                setEmail(text);
+              }}
               placeholder="Enter your email"
               keyboardType="email-address"
               autoCapitalize="none"
+              autoCorrect={false}
               placeholderTextColor={colors.textSecondary}
+              editable={!loading}
             />
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Password</Text>
-            <TextInput
-              style={commonStyles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Enter your password"
-              secureTextEntry
-              placeholderTextColor={colors.textSecondary}
-            />
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={[commonStyles.input, styles.passwordInput]}
+                value={password}
+                onChangeText={(text) => {
+                  console.log('Password changed, length:', text.length);
+                  setPassword(text);
+                }}
+                placeholder="Enter your password"
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholderTextColor={colors.textSecondary}
+                editable={!loading}
+              />
+              <TouchableOpacity
+                style={styles.passwordToggle}
+                onPress={() => {
+                  console.log('Password visibility toggled');
+                  setShowPassword(!showPassword);
+                }}
+              >
+                <Icon 
+                  name={showPassword ? 'eye-off' : 'eye'} 
+                  size={20} 
+                  color={colors.textSecondary} 
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <TouchableOpacity
-            style={[buttonStyles.primary, styles.loginButton]}
+            style={[
+              buttonStyles.primary, 
+              styles.loginButton,
+              loading && styles.loginButtonDisabled
+            ]}
             onPress={handleLogin}
             disabled={loading}
           >
@@ -109,7 +153,10 @@ export default function LoginScreen() {
 
           <View style={styles.registerContainer}>
             <Text style={styles.registerText}>Don&apos;t have an account? </Text>
-            <TouchableOpacity onPress={() => router.push('/auth/register')}>
+            <TouchableOpacity onPress={() => {
+              console.log('Navigate to register');
+              router.push('/auth/register');
+            }}>
               <Text style={styles.registerLink}>Sign Up</Text>
             </TouchableOpacity>
           </View>
@@ -186,9 +233,24 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 8,
   },
+  passwordContainer: {
+    position: 'relative',
+  },
+  passwordInput: {
+    paddingRight: 50,
+  },
+  passwordToggle: {
+    position: 'absolute',
+    right: 15,
+    top: 15,
+    padding: 5,
+  },
   loginButton: {
     marginTop: 20,
     marginBottom: 24,
+  },
+  loginButtonDisabled: {
+    opacity: 0.6,
   },
   loginButtonText: {
     fontSize: 16,

@@ -12,6 +12,7 @@ export const useAuth = () => {
       try {
         // In a real app, this would check for stored auth tokens
         // For now, we'll simulate no user logged in
+        console.log('Loading user data...');
         setUser(null);
       } catch (error) {
         console.log('Error loading user:', error);
@@ -24,11 +25,27 @@ export const useAuth = () => {
   }, []);
 
   const login = async (email: string, password: string, userType: 'farmer' | 'company' | 'exporter') => {
+    console.log('Login attempt:', { email, userType, passwordLength: password.length });
     setLoading(true);
+    
     try {
-      // Simulate login
+      // Basic validation
+      if (!email || !password) {
+        console.log('Missing email or password');
+        return { success: false, error: 'Email and password are required' };
+      }
+
+      if (password.length < 6) {
+        console.log('Password too short');
+        return { success: false, error: 'Password must be at least 6 characters' };
+      }
+
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Simulate login success
       const mockUser: User = {
-        id: '1',
+        id: Date.now().toString(),
         email,
         phone: '+1234567890',
         userType,
@@ -50,20 +67,35 @@ export const useAuth = () => {
       };
       
       setUser(mockUser);
-      console.log('User logged in:', mockUser);
+      console.log('User logged in successfully:', mockUser);
       return { success: true };
     } catch (error) {
       console.log('Login error:', error);
-      return { success: false, error: 'Login failed' };
+      return { success: false, error: 'Login failed. Please try again.' };
     } finally {
       setLoading(false);
     }
   };
 
   const register = async (userData: any) => {
+    console.log('Registration attempt:', { 
+      email: userData.email, 
+      userType: userData.userType,
+      hasProfile: !!userData.profile 
+    });
     setLoading(true);
+    
     try {
-      // Simulate registration
+      // Basic validation
+      if (!userData.email || !userData.phone) {
+        console.log('Missing required fields');
+        return { success: false, error: 'Email and phone are required' };
+      }
+
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Simulate registration success
       const mockUser: User = {
         id: Date.now().toString(),
         email: userData.email,
@@ -74,19 +106,19 @@ export const useAuth = () => {
       };
       
       setUser(mockUser);
-      console.log('User registered:', mockUser);
+      console.log('User registered successfully:', mockUser);
       return { success: true };
     } catch (error) {
       console.log('Registration error:', error);
-      return { success: false, error: 'Registration failed' };
+      return { success: false, error: 'Registration failed. Please try again.' };
     } finally {
       setLoading(false);
     }
   };
 
   const logout = () => {
+    console.log('User logging out...');
     setUser(null);
-    console.log('User logged out');
   };
 
   return {

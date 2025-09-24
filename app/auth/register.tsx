@@ -13,6 +13,8 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [userType, setUserType] = useState<'farmer' | 'company' | 'exporter'>('farmer');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   // Farmer specific fields
   const [farmerName, setFarmerName] = useState('');
@@ -30,8 +32,22 @@ export default function RegisterScreen() {
   const { register } = useAuth();
 
   const handleRegister = async () => {
-    if (!email || !phone || !password || !confirmPassword) {
+    console.log('Register button pressed');
+    console.log('Form data:', { 
+      email, 
+      phone, 
+      passwordLength: password.length, 
+      confirmPasswordLength: confirmPassword.length,
+      userType 
+    });
+
+    if (!email.trim() || !phone.trim() || !password.trim() || !confirmPassword.trim()) {
       Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
       return;
     }
 
@@ -40,12 +56,12 @@ export default function RegisterScreen() {
       return;
     }
 
-    if (userType === 'farmer' && (!farmerName || !location || !farmSize)) {
+    if (userType === 'farmer' && (!farmerName.trim() || !location.trim() || !farmSize.trim())) {
       Alert.alert('Error', 'Please fill in all farmer profile fields');
       return;
     }
 
-    if (userType !== 'farmer' && (!companyName || !businessType || !contactPerson)) {
+    if (userType !== 'farmer' && (!companyName.trim() || !businessType.trim() || !contactPerson.trim())) {
       Alert.alert('Error', 'Please fill in all company profile fields');
       return;
     }
@@ -53,30 +69,33 @@ export default function RegisterScreen() {
     setLoading(true);
     
     const userData = {
-      email,
-      phone,
+      email: email.trim(),
+      phone: phone.trim(),
       userType,
       profile: userType === 'farmer' 
         ? {
-            name: farmerName,
-            location,
-            farmSize,
+            name: farmerName.trim(),
+            location: location.trim(),
+            farmSize: farmSize.trim(),
             products: products.split(',').map(p => p.trim()).filter(p => p),
           }
         : {
-            companyName,
-            businessType,
-            location,
-            contactPerson,
+            companyName: companyName.trim(),
+            businessType: businessType.trim(),
+            location: location.trim(),
+            contactPerson: contactPerson.trim(),
             lookingFor: lookingFor.split(',').map(p => p.trim()).filter(p => p),
           }
     };
 
+    console.log('Submitting registration data:', userData);
     const result = await register(userData);
     
     if (result.success) {
+      console.log('Registration successful, navigating to marketplace');
       router.replace('/marketplace');
     } else {
+      console.log('Registration failed:', result.error);
       Alert.alert('Registration Failed', result.error || 'Please try again');
     }
     setLoading(false);
@@ -94,7 +113,10 @@ export default function RegisterScreen() {
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => {
+              console.log('Back button pressed');
+              router.back();
+            }}
           >
             <Icon name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
@@ -112,7 +134,10 @@ export default function RegisterScreen() {
                   styles.userTypeButton,
                   userType === type.key && styles.userTypeButtonActive
                 ]}
-                onPress={() => setUserType(type.key)}
+                onPress={() => {
+                  console.log('User type selected:', type.key);
+                  setUserType(type.key);
+                }}
               >
                 <Icon 
                   name={type.icon as any} 
@@ -134,11 +159,16 @@ export default function RegisterScreen() {
             <TextInput
               style={commonStyles.input}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                console.log('Email changed:', text);
+                setEmail(text);
+              }}
               placeholder="Enter your email"
               keyboardType="email-address"
               autoCapitalize="none"
+              autoCorrect={false}
               placeholderTextColor={colors.textSecondary}
+              editable={!loading}
             />
           </View>
 
@@ -147,35 +177,81 @@ export default function RegisterScreen() {
             <TextInput
               style={commonStyles.input}
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={(text) => {
+                console.log('Phone changed:', text);
+                setPhone(text);
+              }}
               placeholder="Enter your phone number"
               keyboardType="phone-pad"
               placeholderTextColor={colors.textSecondary}
+              editable={!loading}
             />
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Password *</Text>
-            <TextInput
-              style={commonStyles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Create a password"
-              secureTextEntry
-              placeholderTextColor={colors.textSecondary}
-            />
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={[commonStyles.input, styles.passwordInput]}
+                value={password}
+                onChangeText={(text) => {
+                  console.log('Password changed, length:', text.length);
+                  setPassword(text);
+                }}
+                placeholder="Create a password (min 6 characters)"
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholderTextColor={colors.textSecondary}
+                editable={!loading}
+              />
+              <TouchableOpacity
+                style={styles.passwordToggle}
+                onPress={() => {
+                  console.log('Password visibility toggled');
+                  setShowPassword(!showPassword);
+                }}
+              >
+                <Icon 
+                  name={showPassword ? 'eye-off' : 'eye'} 
+                  size={20} 
+                  color={colors.textSecondary} 
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Confirm Password *</Text>
-            <TextInput
-              style={commonStyles.input}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="Confirm your password"
-              secureTextEntry
-              placeholderTextColor={colors.textSecondary}
-            />
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={[commonStyles.input, styles.passwordInput]}
+                value={confirmPassword}
+                onChangeText={(text) => {
+                  console.log('Confirm password changed, length:', text.length);
+                  setConfirmPassword(text);
+                }}
+                placeholder="Confirm your password"
+                secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholderTextColor={colors.textSecondary}
+                editable={!loading}
+              />
+              <TouchableOpacity
+                style={styles.passwordToggle}
+                onPress={() => {
+                  console.log('Confirm password visibility toggled');
+                  setShowConfirmPassword(!showConfirmPassword);
+                }}
+              >
+                <Icon 
+                  name={showConfirmPassword ? 'eye-off' : 'eye'} 
+                  size={20} 
+                  color={colors.textSecondary} 
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {userType === 'farmer' ? (
@@ -190,6 +266,7 @@ export default function RegisterScreen() {
                   onChangeText={setFarmerName}
                   placeholder="Enter your full name"
                   placeholderTextColor={colors.textSecondary}
+                  editable={!loading}
                 />
               </View>
 
@@ -201,6 +278,7 @@ export default function RegisterScreen() {
                   onChangeText={setLocation}
                   placeholder="City, Region, Country"
                   placeholderTextColor={colors.textSecondary}
+                  editable={!loading}
                 />
               </View>
 
@@ -212,6 +290,7 @@ export default function RegisterScreen() {
                   onChangeText={setFarmSize}
                   placeholder="e.g., 5 hectares"
                   placeholderTextColor={colors.textSecondary}
+                  editable={!loading}
                 />
               </View>
 
@@ -223,6 +302,7 @@ export default function RegisterScreen() {
                   onChangeText={setProducts}
                   placeholder="Coffee, Teff, Spices (comma separated)"
                   placeholderTextColor={colors.textSecondary}
+                  editable={!loading}
                 />
               </View>
             </>
@@ -238,6 +318,7 @@ export default function RegisterScreen() {
                   onChangeText={setCompanyName}
                   placeholder="Enter company name"
                   placeholderTextColor={colors.textSecondary}
+                  editable={!loading}
                 />
               </View>
 
@@ -249,6 +330,7 @@ export default function RegisterScreen() {
                   onChangeText={setBusinessType}
                   placeholder="e.g., Agricultural Trading"
                   placeholderTextColor={colors.textSecondary}
+                  editable={!loading}
                 />
               </View>
 
@@ -260,6 +342,7 @@ export default function RegisterScreen() {
                   onChangeText={setLocation}
                   placeholder="City, Region, Country"
                   placeholderTextColor={colors.textSecondary}
+                  editable={!loading}
                 />
               </View>
 
@@ -271,6 +354,7 @@ export default function RegisterScreen() {
                   onChangeText={setContactPerson}
                   placeholder="Primary contact name"
                   placeholderTextColor={colors.textSecondary}
+                  editable={!loading}
                 />
               </View>
 
@@ -282,13 +366,18 @@ export default function RegisterScreen() {
                   onChangeText={setLookingFor}
                   placeholder="Coffee, Teff, Spices (comma separated)"
                   placeholderTextColor={colors.textSecondary}
+                  editable={!loading}
                 />
               </View>
             </>
           )}
 
           <TouchableOpacity
-            style={[buttonStyles.primary, styles.registerButton]}
+            style={[
+              buttonStyles.primary, 
+              styles.registerButton,
+              loading && styles.registerButtonDisabled
+            ]}
             onPress={handleRegister}
             disabled={loading}
           >
@@ -299,7 +388,10 @@ export default function RegisterScreen() {
 
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => router.push('/auth/login')}>
+            <TouchableOpacity onPress={() => {
+              console.log('Navigate to login');
+              router.push('/auth/login');
+            }}>
               <Text style={styles.loginLink}>Sign In</Text>
             </TouchableOpacity>
           </View>
@@ -383,9 +475,24 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 8,
   },
+  passwordContainer: {
+    position: 'relative',
+  },
+  passwordInput: {
+    paddingRight: 50,
+  },
+  passwordToggle: {
+    position: 'absolute',
+    right: 15,
+    top: 15,
+    padding: 5,
+  },
   registerButton: {
     marginTop: 24,
     marginBottom: 24,
+  },
+  registerButtonDisabled: {
+    opacity: 0.6,
   },
   registerButtonText: {
     fontSize: 16,

@@ -68,37 +68,43 @@ export default function RegisterScreen() {
 
     setLoading(true);
     
-    const userData = {
-      email: email.trim(),
-      phone: phone.trim(),
-      userType,
-      profile: userType === 'farmer' 
-        ? {
-            name: farmerName.trim(),
-            location: location.trim(),
-            farmSize: farmSize.trim(),
-            products: products.split(',').map(p => p.trim()).filter(p => p),
-          }
-        : {
-            companyName: companyName.trim(),
-            businessType: businessType.trim(),
-            location: location.trim(),
-            contactPerson: contactPerson.trim(),
-            lookingFor: lookingFor.split(',').map(p => p.trim()).filter(p => p),
-          }
-    };
+    try {
+      const userData = {
+        email: email.trim(),
+        phone: phone.trim(),
+        userType,
+        profile: userType === 'farmer' 
+          ? {
+              name: farmerName.trim(),
+              location: location.trim(),
+              farmSize: farmSize.trim(),
+              products: products.split(',').map(p => p.trim()).filter(p => p),
+            }
+          : {
+              companyName: companyName.trim(),
+              businessType: businessType.trim(),
+              location: location.trim(),
+              contactPerson: contactPerson.trim(),
+              lookingFor: lookingFor.split(',').map(p => p.trim()).filter(p => p),
+            }
+      };
 
-    console.log('Submitting registration data:', userData);
-    const result = await register(userData);
-    
-    if (result.success) {
-      console.log('Registration successful, navigating to marketplace');
-      router.replace('/marketplace');
-    } else {
-      console.log('Registration failed:', result.error);
-      Alert.alert('Registration Failed', result.error || 'Please try again');
+      console.log('Submitting registration data:', userData);
+      const result = await register(userData);
+      
+      if (result.success) {
+        console.log('Registration successful, navigating to marketplace');
+        router.replace('/marketplace');
+      } else {
+        console.log('Registration failed:', result.error);
+        Alert.alert('Registration Failed', result.error || 'Please try again');
+      }
+    } catch (error) {
+      console.error('Unexpected registration error:', error);
+      Alert.alert('Registration Failed', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const userTypes = [

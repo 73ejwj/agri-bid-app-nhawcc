@@ -13,15 +13,25 @@ export const useAuth = () => {
         // In a real app, this would check for stored auth tokens
         // For now, we'll simulate no user logged in
         console.log('Loading user data...');
+        
+        // Simulate async operation
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         setUser(null);
+        console.log('User data loaded successfully');
       } catch (error) {
-        console.log('Error loading user:', error);
+        console.error('Error loading user:', error);
+        setUser(null);
       } finally {
         setLoading(false);
       }
     };
 
-    loadUser();
+    // Use an IIFE to handle the async function properly
+    loadUser().catch((error) => {
+      console.error('Unhandled error in loadUser:', error);
+      setLoading(false);
+    });
   }, []);
 
   const login = async (email: string, password: string, userType: 'farmer' | 'company' | 'exporter') => {
@@ -40,8 +50,16 @@ export const useAuth = () => {
         return { success: false, error: 'Password must be at least 6 characters' };
       }
 
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Simulate API call delay with proper promise handling
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          try {
+            resolve(true);
+          } catch (error) {
+            reject(error);
+          }
+        }, 1000);
+      });
 
       // Simulate login success
       const mockUser: User = {
@@ -70,7 +88,7 @@ export const useAuth = () => {
       console.log('User logged in successfully:', mockUser);
       return { success: true };
     } catch (error) {
-      console.log('Login error:', error);
+      console.error('Login error:', error);
       return { success: false, error: 'Login failed. Please try again.' };
     } finally {
       setLoading(false);
@@ -92,8 +110,16 @@ export const useAuth = () => {
         return { success: false, error: 'Email and phone are required' };
       }
 
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Simulate API call delay with proper promise handling
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          try {
+            resolve(true);
+          } catch (error) {
+            reject(error);
+          }
+        }, 1500);
+      });
 
       // Simulate registration success
       const mockUser: User = {
@@ -109,7 +135,7 @@ export const useAuth = () => {
       console.log('User registered successfully:', mockUser);
       return { success: true };
     } catch (error) {
-      console.log('Registration error:', error);
+      console.error('Registration error:', error);
       return { success: false, error: 'Registration failed. Please try again.' };
     } finally {
       setLoading(false);
@@ -117,8 +143,12 @@ export const useAuth = () => {
   };
 
   const logout = () => {
-    console.log('User logging out...');
-    setUser(null);
+    try {
+      console.log('User logging out...');
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return {

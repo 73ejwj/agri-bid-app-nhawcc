@@ -30,16 +30,23 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
-    const result = await login(email.trim(), password, userType);
     
-    if (result.success) {
-      console.log('Login successful, navigating to marketplace');
-      router.replace('/marketplace');
-    } else {
-      console.log('Login failed:', result.error);
-      Alert.alert('Login Failed', result.error || 'Please try again');
+    try {
+      const result = await login(email.trim(), password, userType);
+      
+      if (result.success) {
+        console.log('Login successful, navigating to marketplace');
+        router.replace('/marketplace');
+      } else {
+        console.log('Login failed:', result.error);
+        Alert.alert('Login Failed', result.error || 'Please try again');
+      }
+    } catch (error) {
+      console.error('Unexpected login error:', error);
+      Alert.alert('Login Failed', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const userTypes = [

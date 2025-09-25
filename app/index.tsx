@@ -10,15 +10,29 @@ export default function SplashScreen() {
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (user) {
-        router.replace('/marketplace');
-      } else {
+    const handleNavigation = () => {
+      try {
+        if (!loading) {
+          if (user) {
+            console.log('User found, navigating to marketplace');
+            router.replace('/marketplace');
+          } else {
+            console.log('No user found, navigating to login');
+            router.replace('/auth/login');
+          }
+        }
+      } catch (error) {
+        console.error('Navigation error:', error);
+        // Fallback navigation
         router.replace('/auth/login');
       }
-    }, 2000);
+    };
 
-    return () => clearTimeout(timer);
+    const timer = setTimeout(handleNavigation, 2000);
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, [user, loading]);
 
   return (
@@ -29,6 +43,9 @@ export default function SplashScreen() {
             source={{ uri: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=200' }}
             style={styles.logo}
             resizeMode="cover"
+            onError={(error) => {
+              console.log('Image load error:', error);
+            }}
           />
         </View>
         

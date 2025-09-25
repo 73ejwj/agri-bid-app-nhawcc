@@ -4,7 +4,7 @@ export interface User {
   email: string;
   phone: string;
   userType: 'farmer' | 'company' | 'exporter';
-  profile: FarmerProfile | CompanyProfile;
+  profile: FarmerProfile | CompanyProfile | null;
   createdAt: Date;
 }
 

@@ -10,14 +10,13 @@ import Icon from '../../components/Icon';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [userType, setUserType] = useState<'farmer' | 'company' | 'exporter'>('farmer');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const { login, resendConfirmation } = useAuth();
 
   const handleLogin = async () => {
     console.log('Login button pressed');
-    console.log('Form data:', { email, passwordLength: password.length, userType });
+    console.log('Form data:', { email, passwordLength: password.length });
     
     if (!email.trim() || !password.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
@@ -32,14 +31,36 @@ export default function LoginScreen() {
     setLoading(true);
     
     try {
-      const result = await login(email.trim(), password, userType);
+      const result = await login(email.trim(), password);
       
       if (result.success) {
         console.log('Login successful, navigating to marketplace');
         router.replace('/marketplace');
       } else {
         console.log('Login failed:', result.error);
-        Alert.alert('Login Failed', result.error || 'Please try again');
+        
+        if (result.needsConfirmation) {
+          Alert.alert(
+            'Email Not Confirmed',
+            'Please check your email and click the confirmation link. Would you like us to resend the confirmation email?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { 
+                text: 'Resend', 
+                onPress: async () => {
+                  const resendResult = await resendConfirmation(email.trim());
+                  if (resendResult.success) {
+                    Alert.alert('Success', 'Confirmation email sent! Please check your inbox.');
+                  } else {
+                    Alert.alert('Error', resendResult.error || 'Failed to resend confirmation email.');
+                  }
+                }
+              }
+            ]
+          );
+        } else {
+          Alert.alert('Login Failed', result.error || 'Please try again');
+        }
       }
     } catch (error) {
       console.error('Unexpected login error:', error);
@@ -48,12 +69,6 @@ export default function LoginScreen() {
       setLoading(false);
     }
   };
-
-  const userTypes = [
-    { key: 'farmer', label: 'Farmer', icon: 'leaf' },
-    { key: 'company', label: 'Company', icon: 'business' },
-    { key: 'exporter', label: 'Exporter', icon: 'airplane' },
-  ] as const;
 
   return (
     <SafeAreaView style={commonStyles.container}>
@@ -64,35 +79,6 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.sectionTitle}>I am a:</Text>
-          <View style={styles.userTypeContainer}>
-            {userTypes.map((type) => (
-              <TouchableOpacity
-                key={type.key}
-                style={[
-                  styles.userTypeButton,
-                  userType === type.key && styles.userTypeButtonActive
-                ]}
-                onPress={() => {
-                  console.log('User type selected:', type.key);
-                  setUserType(type.key);
-                }}
-              >
-                <Icon 
-                  name={type.icon as any} 
-                  size={24} 
-                  color={userType === type.key ? colors.backgroundAlt : colors.primary} 
-                />
-                <Text style={[
-                  styles.userTypeText,
-                  userType === type.key && styles.userTypeTextActive
-                ]}>
-                  {type.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email</Text>
             <TextInput
@@ -196,40 +182,6 @@ const styles = StyleSheet.create({
   },
   form: {
     flex: 1,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 16,
-  },
-  userTypeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 32,
-  },
-  userTypeButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.border,
-    marginHorizontal: 4,
-  },
-  userTypeButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  userTypeText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.text,
-    marginTop: 8,
-  },
-  userTypeTextActive: {
-    color: colors.backgroundAlt,
   },
   inputContainer: {
     marginBottom: 20,

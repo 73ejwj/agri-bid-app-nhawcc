@@ -72,6 +72,7 @@ export default function RegisterScreen() {
       const userData = {
         email: email.trim(),
         phone: phone.trim(),
+        password,
         userType,
         profile: userType === 'farmer' 
           ? {
@@ -93,8 +94,23 @@ export default function RegisterScreen() {
       const result = await register(userData);
       
       if (result.success) {
-        console.log('Registration successful, navigating to marketplace');
-        router.replace('/marketplace');
+        console.log('Registration successful');
+        
+        if (result.needsEmailConfirmation) {
+          Alert.alert(
+            'Registration Successful!',
+            'Please check your email and click the confirmation link to complete your registration. You can then sign in to your account.',
+            [
+              { 
+                text: 'OK', 
+                onPress: () => router.replace('/auth/login')
+              }
+            ]
+          );
+        } else {
+          // User is automatically logged in
+          router.replace('/marketplace');
+        }
       } else {
         console.log('Registration failed:', result.error);
         Alert.alert('Registration Failed', result.error || 'Please try again');
